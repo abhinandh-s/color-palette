@@ -1,0 +1,15 @@
+[package]
+name = "color-palette"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+color-palette-macros = { path = "./color-palette-macros", optional = true }
+
+[features]
+derive = ["dep:color-palette-macros"]
+
+[workspace]
+members = [
+    "color-palette-macros",
+]
