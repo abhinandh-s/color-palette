@@ -7,7 +7,9 @@ edition = "2024"
 color-palette-macros = { path = "./color-palette-macros", optional = true }
 
 [features]
+default = ["derive"]
 derive = ["dep:color-palette-macros"]
+css = ["color-palette-macros/css"]
 
 [workspace]
 members = [
