@@ -1,6 +1,119 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{Data, DeriveInput, LitStr, parse_macro_input};
+use quote::{format_ident, quote};
+use syn::parse::Parse;
+use syn::{
+    Attribute, Data, DeriveInput, Ident, LitStr, Token, Visibility, braced, parse_macro_input
+};
+
+/// Represents the entire palette! macro input
+struct PaletteInput {
+    schemes: Vec<SchemeDefinition>,
+}
+/// Represents a single color scheme definition
+struct SchemeDefinition {
+    attrs: Vec<Attribute>,
+    vis: Visibility,
+    name: Ident,
+    colors: Vec<(Ident, LitStr)>,
+}
+
+impl Parse for PaletteInput {
+    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
+        let mut schemes = Vec::new();
+        while !input.is_empty() {
+            // Parse attributes like #[derve(Clone. Copy)]
+            let attrs = input.call(Attribute::parse_outer)?;
+
+            // Parse Visibility
+            let vis: Visibility = input.parse()?;
+
+            input.parse::<Token![struct]>()?;
+
+            // Parse struct name
+            let name: Ident = input.parse()?;
+
+            // Parse the braced contents
+            let contents;
+            braced!(contents in input);
+
+            let mut colors = Vec::new();
+            while !contents.is_empty() {
+                let color_name: Ident = contents.parse()?;
+                contents.parse::<Token![:]>()?;
+                let color_val: LitStr = contents.parse()?;
+
+                // Optional trailing comma
+                if contents.peek(Token![,]) {
+                    contents.parse::<Token![,]>()?;
+                }
+
+                colors.push((color_name, color_val));
+            }
+            schemes.push(SchemeDefinition {
+                attrs,
+                vis,
+                name,
+                colors,
+            });
+        }
+        Ok(PaletteInput { schemes })
+    }
+}
+
+#[proc_macro]
+pub fn palette(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as PaletteInput);
+    let mut expanded = quote!();
+
+    for scheme in input.schemes {
+        let SchemeDefinition {
+            attrs,
+            vis,
+            name,
+            colors,
+        } = scheme;
+        let consts = colors.iter().map(|(id, val)| {
+            let const_name = format_ident!("{}", id.to_string().to_uppercase());
+            quote! {
+                #vis const #const_name: &'static str = #val;
+            }
+        });
+
+        let name_l = name.to_string().to_lowercase();
+
+        #[allow(unused_variables)] // if css feature is off it will warn unused_variables
+        let css_body = colors.iter().map(|(id, val)| {
+            let css_line = format!("    --color-{}-{}: {};\n", name_l, id, val.value());
+            quote! {
+                s.push_str(#css_line);
+            }
+        });
+
+        expanded.extend(quote! {
+            #(#attrs)*
+            #vis struct #name;
+
+            impl #name {
+                #(#consts)*
+            }
+        });
+
+        #[cfg(feature = "css")]
+        expanded.extend(quote! {
+            impl color_palette::Palette for #name {
+                fn to_css() -> String {
+                    let mut s = String::new();
+                    #(#css_body)*
+                    s
+                }
+            }
+        });
+    }
+
+    TokenStream::from(expanded)
+}
+
+// for Enum 
 
 #[proc_macro_derive(Palette, attributes(color))]
 pub fn derive_color_theme(input: TokenStream) -> TokenStream {
@@ -66,7 +179,9 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
 }
 
 fn get_hex_attr(variant: &syn::Variant) -> String {
-    variant.attrs.iter()
+    variant
+        .attrs
+        .iter()
         .find(|a| a.path().is_ident("color"))
         .map(|attr| {
             attr.parse_args::<LitStr>()
