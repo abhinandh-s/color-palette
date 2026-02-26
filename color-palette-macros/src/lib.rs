@@ -2,7 +2,7 @@ use proc_macro::TokenStream;
 use quote::{format_ident, quote};
 use syn::parse::Parse;
 use syn::{
-    Attribute, Data, DeriveInput, Ident, LitStr, Token, Visibility, braced, parse_macro_input
+    Attribute, Data, DeriveInput, Ident, LitStr, Token, Visibility, braced, parse_macro_input,
 };
 
 /// Represents the entire palette! macro input
@@ -72,6 +72,46 @@ pub fn palette(input: TokenStream) -> TokenStream {
             name,
             colors,
         } = scheme;
+
+        // -- validating value
+        for (id, val) in &colors {
+            let raw = val.value();
+            let hex = raw.trim_start_matches('#');
+
+            if !raw.starts_with('#') {
+                return syn::Error::new(
+                    val.span(),
+                    format!("color `{}`: value must start with '#', got {:?}", id, raw),
+                )
+                .to_compile_error()
+                .into();
+            }
+
+            if hex.len() != 3 && hex.len() != 6 {
+                return syn::Error::new(
+                    val.span(),
+                    format!(
+                        "color `{}`: hex must be 3 or 6 characters after '#', got {} (\"{}\")",
+                        id,
+                        hex.len(),
+                        raw
+                    ),
+                )
+                .to_compile_error()
+                .into();
+            }
+
+            if !hex.chars().all(|c| c.is_ascii_hexdigit()) {
+                return syn::Error::new(val.span(), format!(
+                    "color `{}`: invalid hex characters in {:?}",
+                    id, raw
+                ))
+                .to_compile_error()
+                .into();
+            }
+        }
+
+        // --
         let consts = colors.iter().map(|(id, val)| {
             let const_name = format_ident!("{}", id.to_string().to_uppercase());
             quote! {
@@ -113,8 +153,7 @@ pub fn palette(input: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-// for Enum 
-
+// for Enum
 #[proc_macro_derive(Palette, attributes(color))]
 pub fn derive_color_theme(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);

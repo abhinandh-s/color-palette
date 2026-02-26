@@ -1,75 +1,55 @@
-use std::fmt::Display;
-use std::num::ParseIntError;
+use color_palette::{Hex, Rgb, palette};
 
 fn main() {
     // #a6e3a1
-    let rgb = hex_to_rgb("#FFF").unwrap();
-    // assert_eq!(
-    //     rgb,
-    //     Rgb {
-    //         r: 166,
-    //         g: 227,
-    //         b: 161
-    //     }
-    // );
+    let rgb = color_palette::Hex::new("#a6e3a1").to_rgb().unwrap();
+    println!("hex: #a6e3a1");
+    assert_eq!(
+        rgb,
+        Rgb {
+            r: 166,
+            g: 227,
+            b: 161
+        }
+    );
     println!("{}", rgb);
     println!("{:?}", rgb);
     println!("{:#?}", rgb);
+    println!("rgb_to_hex: {}", rgb.to_hex());
+
+    let teal = Hex::try_from(Mocha::GREEN).unwrap().to_rgb().unwrap();
+    println!("teal: {}", teal);
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
-struct Rgb {
-    r: u8,
-    g: u8,
-    b: u8,
-}
 
-impl Display for Rgb {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "rgb({}, {}, {})", self.r, self.g, self.b)
-    }
-}
-
-fn hex_to_rgb(arg: &str) -> Result<Rgb, ColorError> {
-    let hex = arg.trim_start_matches('#');
-    let n = u32::from_str_radix(hex, 16).map_err(|_| ColorError::new("Invalid hex characters"))?;
-
-    match hex.len() {
-        6 => Ok(Rgb {
-            r: ((n >> 16) & 0xFF) as u8,
-            g: ((n >> 8) & 0xFF) as u8,
-            b: (n & 0xFF) as u8,
-        }),
-        3 => Ok(Rgb {
-            r: ((n >> 8) & 0xF) as u8,
-            g: ((n >> 4) & 0xF) as u8,
-            b: (n & 0xF) as u8,
-        }),
-        _ => Err(ColorError::new("Invalid hex length")),
-    }
-}
-
-#[derive(Debug)]
-pub struct ColorError(String);
-
-impl ColorError {
-    pub fn new(err: &str) -> Self {
-        Self(err.to_owned())
-    }
-
-    pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl Display for ColorError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Error: {}", self.0)
-    }
-}
-
-impl From<ParseIntError> for ColorError {
-    fn from(value: ParseIntError) -> Self {
-        Self(value.to_string())
+palette! {
+    #[derive(Debug, Clone, Copy, Default)]
+    pub struct Mocha {
+        rosewater: "#f5e0dc",
+        flamingo: "#f2cdcd",
+        pink: "#f5c2e7",
+        mauve: "#cba6f7",
+        red: "#f38ba8",
+        maroon: "#eba0ac",
+        peach: "#fab387",
+        yellow: "#f9e2af",
+        green: "#a6e3a1",
+        teal: "#94e2d5",
+        sky: "#89dceb",
+        sapphire: "#74c7ec",
+        blue: "#89b4fa",
+        lavender: "#b4befe",
+        text: "#cdd6f4",
+        subtext1: "#bac2de",
+        subtext0: "#a6adc8",
+        overlay2: "#9399b2",
+        overlay1: "#7f849c",
+        overlay0: "#6c7086",
+        surface2: "#585b70",
+        surface1: "#45475a",
+        surface0: "#313244",
+        base: "#1e1e2e",
+        mantle: "#181825",
+        crust: "#11111b",
     }
 }
