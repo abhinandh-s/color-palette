@@ -20,16 +20,16 @@ jobs:
       uses: Swatinem/rust-cache@v2
 
     - name: Check compilation (no features)
-        run: cargo check
+      run: cargo check
 
-      - name: Test default (no features)
-        run: cargo test
+    - name: Test default (no features)
+      run: cargo test
 
-      - name: Test CSS feature only
-        run: cargo test --features css
+    - name: Test CSS feature only
+      run: cargo test --features css
 
-      - name: Test Nix feature only
-        run: cargo test --features nix
+    - name: Test Nix feature only
+      run: cargo test --features nix
 
-      - name: Test All Features
-        run: cargo test --all-features
+    - name: Test All Features
+      run: cargo test --all-features
