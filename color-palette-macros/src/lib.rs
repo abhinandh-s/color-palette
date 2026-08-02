@@ -121,13 +121,49 @@ pub fn palette(input: TokenStream) -> TokenStream {
 
         let name_l = name.to_string().to_lowercase();
 
-        #[allow(unused_variables)] // if css feature is off it will warn unused_variables
-        let css_body = colors.iter().map(|(id, val)| {
-            let css_line = format!("    --color-{}-{}: {};\n", name_l, id, val.value());
+        // -- feature = css
+        let css_fn = if cfg!(feature = "css") {
+            let css_body = colors.iter().map(|(id, val)| {
+                let css_line = format!("    --color-{}-{}: {};\n", name_l, id.to_string().to_lowercase().replace("_", "-"), val.value());
+                quote! {
+                    s.push_str(#css_line);
+                }
+            });
+            
             quote! {
-                s.push_str(#css_line);
+                fn to_css() -> String {
+                    let mut s = String::new();
+                    #(#css_body)*
+                    s
+                }
             }
-        });
+        } else {
+            quote! {}
+        };
+
+        // -- feature = nix
+        let nix_fn = if cfg!(feature = "nix") {
+            let nix_body = colors.iter().map(|(id, val)| {
+                let nix_name = id.to_string().to_lowercase().replace("_", "-");
+                let nix_line = format!("    {}= {};\n", nix_name, val.value());
+                quote! {
+                    s.push_str(#nix_line);
+                }
+            });
+
+            quote! {
+                fn to_nix() -> String {
+                    let mut s = String::new();
+                    s.push_str(#name_l);
+                    s.push_str(" = {\n");
+                    #(#nix_body)*
+                    s.push_str("};\n");
+                    s
+                }
+            }
+        } else {
+            quote! {}
+        };
 
         expanded.extend(quote! {
             #(#attrs)*
@@ -136,16 +172,10 @@ pub fn palette(input: TokenStream) -> TokenStream {
             impl #name {
                 #(#consts)*
             }
-        });
 
-        #[cfg(feature = "css")]
-        expanded.extend(quote! {
             impl color_palette::Palette for #name {
-                fn to_css() -> String {
-                    let mut s = String::new();
-                    #(#css_body)*
-                    s
-                }
+                #css_fn
+                #nix_fn
             }
         });
     }
