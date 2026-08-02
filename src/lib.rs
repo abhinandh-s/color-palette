@@ -4,6 +4,9 @@ use std::num::ParseIntError;
 pub trait Palette {
     #[cfg(feature = "css")]
     fn to_css() -> String;
+
+#[cfg(feature = "nix")]
+    fn to_nix() -> String;
 }
 
 // pub trait PaletteExt {
