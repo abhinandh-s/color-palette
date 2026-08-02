@@ -9,6 +9,7 @@ proc-macro = true
 [features]
 default = []
 css = []
+nix = []
 
 [dependencies]
 proc-macro2 = "1.0"
