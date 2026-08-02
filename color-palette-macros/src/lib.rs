@@ -173,7 +173,7 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
     });
 
     // We check the feature flag of the macro crate itself during expansion
-    let css_impl = if cfg!(feature = "css") {
+    let css_fn = if cfg!(feature = "css") {
         let css_generators = variants.iter().map(|variant| {
             let variant_ident = &variant.ident;
             let css_name = variant_ident.to_string().to_lowercase().replace("_", "-");
@@ -191,20 +191,20 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
         });
 
         quote! {
-            impl color_palette::Palette for #name {
+         
                 fn to_css() -> String {
                     let mut ctx = String::new();
                     #(#css_generators)*
                     ctx
                 }
-            }
+            
         }
     } else {
         quote! {}
     };
 
     // -- feature = nix
-        let nix_impl = if cfg!(feature = "nix") {
+        let nix_fn = if cfg!(feature = "nix") {
         let nix_generators = variants.iter().map(|variant| {
             let variant_ident = &variant.ident;
             let nix_name = variant_ident.to_string().to_lowercase().replace("_", "-");
@@ -220,7 +220,7 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
         });
 
         quote! {
-            impl color_palette::Palette for #name {
+         
                 fn to_nix() -> String {
                     let mut ctx = String::new();
                     ctx.push_str(#theme_name_str);
@@ -229,7 +229,7 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
                     ctx.push_str("};\n");
                     ctx
                 }
-            }
+            
         }
     } else {
         quote! {}
@@ -244,7 +244,11 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
                 }
             }
         }
-        #css_impl
+        impl color_palette::Palette for #name {
+            #css_fn
+            #nix_fn
+        }
+       
     };
 
     TokenStream::from(expanded)
