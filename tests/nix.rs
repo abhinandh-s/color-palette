@@ -14,10 +14,7 @@ pub enum BaseTheme {
 #[test]
 fn test_css_generation() {
     let css = BaseTheme::to_css();
-    let expected = "\
-  --color-basetheme-background: #1a1a1a;
-  --color-basetheme-error: #ff5555;
-";
+    let expected = "  --color-basetheme-background: #1a1a1a;\n  --color-basetheme-error: #ff5555;\n";
     assert_eq!(css, expected);
 }
 
