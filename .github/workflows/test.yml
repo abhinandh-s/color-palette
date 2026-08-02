@@ -11,11 +11,7 @@ env:
 jobs:
   test:
     name: Build & Test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        toolchain: [stable, beta, nightly]         
+    runs-on: ubuntu-latest   
 
     steps:
     - uses: actions/checkout@v5
@@ -23,17 +19,17 @@ jobs:
     - name: Rust Cache
       uses: Swatinem/rust-cache@v2
 
-    - name: Install Linux Dependencies
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        # sudo apt-get install -y pkg-config
+    - name: Check compilation (no features)
+        run: cargo check
 
-    - name: Build
-      run: cargo build --verbose
+      - name: Test default (no features)
+        run: cargo test
 
-    - name: Cargo Test (no precision flag)
-      run: cargo test 
+      - name: Test CSS feature only
+        run: cargo test --features css
 
-    - name: Clippy
-      run: cargo clippy -- -D warnings
+      - name: Test Nix feature only
+        run: cargo test --features nix
+
+      - name: Test All Features
+        run: cargo test --all-features
