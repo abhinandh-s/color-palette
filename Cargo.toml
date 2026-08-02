@@ -10,6 +10,7 @@ color-palette-macros = { path = "./color-palette-macros", optional = true }
 default = ["derive"]
 derive = ["dep:color-palette-macros"]
 css = ["color-palette-macros/css"]
+nix = ["color-palette-macros/nix"]
 
 [workspace]
 members = [
