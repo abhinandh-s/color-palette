@@ -1,13 +1,35 @@
-use color_palette::Palette;
 
-#[derive(Debug, Palette)]
-enum Mocha {
-    #[color("#f5e0dc")] Rosewater,
-    #[color("#1e1e2e")] Base,
-    #[color("#cdd6f4")] Text,
+use color_palette::Palette;
+use color_palette::Palette as PaletteTrait;
+
+#[derive(Palette)]
+pub enum BaseTheme {
+    #[color("#1a1a1a")]
+    Background,
+    #[color("#ff5555")]
+    Error,
 }
 
+#[cfg(feature = "css")]
 #[test]
-fn test_to_nix() {
-     println!("{}", Mocha::to_nix());
+fn test_css_generation() {
+    let css = BaseTheme::to_css();
+    let expected = "\
+  --color-basetheme-background: #1a1a1a;
+  --color-basetheme-error: #ff5555;
+";
+    assert_eq!(css, expected);
+}
+
+#[cfg(feature = "nix")]
+#[test]
+fn test_nix_generation() {
+    let nix = BaseTheme::to_nix();
+    let expected = "\
+basetheme = {
+    background= #1a1a1a;
+    error= #ff5555;
+};
+";
+    assert_eq!(nix, expected);
 }
