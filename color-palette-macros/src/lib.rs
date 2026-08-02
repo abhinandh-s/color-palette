@@ -203,6 +203,39 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
         quote! {}
     };
 
+    // -- feature = nix
+        let nix_impl = if cfg!(feature = "nix") {
+        let nix_generators = variants.iter().map(|variant| {
+            let variant_ident = &variant.ident;
+            let nix_name = variant_ident.to_string().to_lowercase().replace("_", "-");
+            let hex_value = get_hex_attr(variant);
+
+            quote! {
+                ctx.push_str("    ");
+                ctx.push_str(#nix_name);
+                ctx.push_str("= ");
+                ctx.push_str(#hex_value);
+                ctx.push_str(";\n");
+            }
+        });
+
+        quote! {
+            impl color_palette::Palette for #name {
+                fn to_nix() -> String {
+                    let mut ctx = String::new();
+                    ctx.push_str(#theme_name_str);
+                    ctx.push_str(" = {\n");
+                    #(#css_generators)*
+                    ctx.push_str("};\n");
+                    ctx
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    // -- Display
     let expanded = quote! {
         impl std::fmt::Display for #name {
             fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
