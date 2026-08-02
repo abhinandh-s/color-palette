@@ -9,4 +9,5 @@ enum Mocha {
 
 #[test]
 fn test_to_nix() {
+     println!("{}", Mocha::to_nix());
 }
