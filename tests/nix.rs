@@ -1,6 +1,5 @@
 
 use color_palette::Palette;
-use color_palette::Palette as PaletteTrait;
 
 #[derive(Palette)]
 pub enum BaseTheme {
