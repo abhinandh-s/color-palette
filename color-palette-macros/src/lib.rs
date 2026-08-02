@@ -225,7 +225,7 @@ pub fn derive_color_theme(input: TokenStream) -> TokenStream {
                     let mut ctx = String::new();
                     ctx.push_str(#theme_name_str);
                     ctx.push_str(" = {\n");
-                    #(#css_generators)*
+                    #(#nix_generators)*
                     ctx.push_str("};\n");
                     ctx
                 }
